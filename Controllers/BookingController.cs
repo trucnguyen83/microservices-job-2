@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Booking.Models;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace Booking.Controllers
 {
@@ -16,12 +17,12 @@ namespace Booking.Controllers
     public class BookingController : ControllerBase
     {
         private readonly BookingContext _context;
-        //private readonly IHttpClientFactory _clientFactory;
+        private readonly IHttpClientFactory _clientFactory;
 
-        public BookingController(BookingContext context)
+        public BookingController(BookingContext context, IHttpClientFactory clientFactory)
         {
             _context = context;
-            //_clientFactory = clientFactory;
+            _clientFactory = clientFactory;
         }
 
         // GET: api/Booking
@@ -103,7 +104,54 @@ namespace Booking.Controllers
             return NoContent();
         }
 
-        
+        //This is a POST request to collect info from Postman (front end)
+        [HttpPost("GetLatitude")]
+        public async Task<decimal> GetLatitude(Key key)
+        {
+            HttpClient client = _clientFactory.CreateClient();
+
+
+            string apikey = key.ApiKey;
+            string uri = "https://api.freegeoip.app/json/?apikey=" + apikey;
+
+            //make a HttpGet to call the above public API uri
+            var response = client.GetAsync(uri).Result;
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            //to convert json to object
+            LocationInfo info = JsonSerializer.Deserialize<LocationInfo>(content);
+
+                       
+            return info.latitude;
+
+        }
+
+
+        //This is a POST request to collect info from Postman (front end)
+        [HttpPost("GetLongitude")]
+        public async Task<decimal> GetLongitude(Key key)
+        {
+            HttpClient client = _clientFactory.CreateClient();
+
+
+            string apikey = key.ApiKey;
+            string uri = "https://api.freegeoip.app/json/?apikey=" + apikey;
+
+            //make a HttpGet to call the above public API uri
+            var response = client.GetAsync(uri).Result;
+
+            var content = await response.Content.ReadAsStringAsync();
+
+            //to convert json to object
+            LocationInfo info = JsonSerializer.Deserialize<LocationInfo>(content);
+
+
+            return info.longitude;
+
+        }
+
+
         private bool BookingItemExists(int id)
          {
             return _context.BookingItems.Any(e => e.Id == id);
